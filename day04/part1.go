@@ -8,12 +8,7 @@ import (
 	advent "github.com/BenJuan26/advent2021"
 )
 
-func Part1() {
-	lines, err := advent.ReadInput()
-	if err != nil {
-		panic(err)
-	}
-
+func buildBoards(lines []string) []*Board {
 	boards := []*Board{}
 
 	i := 2
@@ -38,6 +33,17 @@ func Part1() {
 		boards = append(boards, &Board{spaces})
 		i += 1
 	}
+
+	return boards
+}
+
+func Part1() {
+	lines, err := advent.ReadInput()
+	if err != nil {
+		panic(err)
+	}
+
+	boards := buildBoards(lines)
 
 	numbersLine := lines[0]
 	numbers := strings.Split(numbersLine, ",")
