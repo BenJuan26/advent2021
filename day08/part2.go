@@ -19,8 +19,15 @@ func Subtract(p1, p2 string) string {
 	return p1
 }
 
-func GetSignalMap(patterns []string) map[string]string {
-	signalMap := make(map[string]string)
+func ExtendReplacerArgs(args []string, randomLetter, trueLetter string) []string {
+	if len(randomLetter) > 1 {
+		panic(fmt.Sprintf("%s length: want 1 got %d", trueLetter, len(randomLetter)))
+	}
+	return append(args, randomLetter, trueLetter)
+}
+
+func GetSignalReplacer(patterns []string) *strings.Replacer {
+	replacerArgs := []string{}
 	var one, four, seven, eight string
 	var sixes []string
 	for _, pattern := range patterns {
@@ -40,10 +47,7 @@ func GetSignalMap(patterns []string) map[string]string {
 
 	// A
 	a := Subtract(seven, one)
-	if len(a) > 1 {
-		panic(fmt.Sprintf("a length: want 1 got %d", len(a)))
-	}
-	signalMap[a] = "a"
+	replacerArgs = ExtendReplacerArgs(replacerArgs, a, "a")
 
 	// B
 	var missingSixes string
@@ -57,46 +61,32 @@ func GetSignalMap(patterns []string) map[string]string {
 
 	b := Subtract(four, one)
 	b = Subtract(b, missingSixes)
-	if len(b) != 1 {
-		panic(fmt.Sprintf("b length: want 1 got %d", len(b)))
-	}
-	signalMap[b] = "b"
+	replacerArgs = ExtendReplacerArgs(replacerArgs, b, "b")
 
 	// D
 	d := Subtract(four, one)
 	d = Subtract(d, b)
-	if len(d) != 1 {
-		panic(fmt.Sprintf("d length: want 1 got %d", len(d)))
-	}
-	signalMap[d] = "d"
+	replacerArgs = ExtendReplacerArgs(replacerArgs, d, "d")
 
 	// F
 	f := Subtract(four, missingSixes)
 	f = Subtract(f, b)
-	if len(f) != 1 {
-		panic(fmt.Sprintf("f length: want 1 got %d", len(f)))
-	}
-	signalMap[f] = "f"
+	replacerArgs = ExtendReplacerArgs(replacerArgs, f, "f")
 
 	// C
 	c := Subtract(four, b)
 	c = Subtract(c, d)
 	c = Subtract(c, f)
-	if len(c) != 1 {
-		panic(fmt.Sprintf("c length: want 1 got %d", len(c)))
-	}
-	signalMap[c] = "c"
+	replacerArgs = ExtendReplacerArgs(replacerArgs, c, "c")
 
 	// E
 	e := missingSixes
 	e = Subtract(e, c)
 	e = Subtract(e, d)
-	if len(e) != 1 {
-		panic(fmt.Sprintf("e length: want 1 got %d", len(e)))
-	}
-	signalMap[e] = "e"
+	replacerArgs = ExtendReplacerArgs(replacerArgs, e, "e")
 
 	// G
+	// probably a better way to do this, but it works
 	g := eight
 	g = Subtract(g, a)
 	g = Subtract(g, b)
@@ -105,23 +95,9 @@ func GetSignalMap(patterns []string) map[string]string {
 	g = Subtract(g, e)
 	g = Subtract(g, f)
 
-	if len(g) != 1 {
-		panic(fmt.Sprintf("g length: want 1 got %d", len(g)))
-	}
-	signalMap[g] = "g"
+	replacerArgs = ExtendReplacerArgs(replacerArgs, g, "g")
 
-	return signalMap
-}
-
-func Convert(pattern string, signalMap map[string]string) string {
-	args := []string{}
-	for k, v := range signalMap {
-		args = append(args, k)
-		args = append(args, v)
-	}
-
-	r := strings.NewReplacer(args...)
-	return r.Replace(pattern)
+	return strings.NewReplacer(replacerArgs...)
 }
 
 func Part2() {
@@ -136,14 +112,14 @@ func Part2() {
 
 		patternsString := lineSplit[0]
 		patterns := strings.Split(patternsString, " ")
-		signalMap := GetSignalMap(patterns)
+		replacer := GetSignalReplacer(patterns)
 
 		output := lineSplit[1]
 		digits := strings.Split(output, " ")
 		numbers := ""
 		for _, pattern := range digits {
 			sorted := []rune(pattern)
-			convertedRunes := []rune(Convert(string(sorted), signalMap))
+			convertedRunes := []rune(replacer.Replace(string(sorted)))
 			sort.Slice(convertedRunes, func(i, j int) bool { return convertedRunes[i] < convertedRunes[j] })
 			converted := string(convertedRunes)
 			switch converted {
